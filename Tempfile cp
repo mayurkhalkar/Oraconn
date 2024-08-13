@@ -1,0 +1,39 @@
+from google.cloud import storage
+
+def process_and_copy_gcs_file(source_bucket_name, source_blob_name, destination_bucket_name, destination_blob_name, delim='|'):
+    # Initialize the Google Cloud Storage client
+    storage_client = storage.Client()
+
+    # Get the source bucket and blob
+    source_bucket = storage_client.bucket(source_bucket_name)
+    source_blob = source_bucket.blob(source_blob_name)
+    
+    # Download the file from GCS
+    file_contents = source_blob.download_as_text()
+
+    # Process the file contents
+    output_lines = []
+    for line in file_contents.splitlines():
+        d = [x.rstrip() for x in line.split(delim)]
+        s = delim.join(d)
+        output_lines.append(s)
+    
+    # Join the processed lines
+    processed_file_contents = '\n'.join(output_lines) + '\n'
+
+    # Get the destination bucket and blob
+    destination_bucket = storage_client.bucket(destination_bucket_name)
+    destination_blob = destination_bucket.blob(destination_blob_name)
+
+    # Upload the processed content to the destination blob
+    destination_blob.upload_from_string(processed_file_contents)
+
+    print(f"File copied and processed from gs://{source_bucket_name}/{source_blob_name} to gs://{destination_bucket_name}/{destination_blob_name}")
+
+# Example usage
+process_and_copy_gcs_file(
+    source_bucket_name='source-bucket-name',
+    source_blob_name='path/to/source/file.txt',
+    destination_bucket_name='destination-bucket-name',
+    destination_blob_name='path/to/destination/file.txt'
+)
