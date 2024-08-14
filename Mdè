@@ -1,0 +1,45 @@
+from google.cloud import storage
+import hashlib
+
+def generate_md5(file_path):
+    md5_hash = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            md5_hash.update(byte_block)
+    return md5_hash.hexdigest()
+
+def download_from_gcs(bucket_name, source_blob_name, destination_file_name):
+    # Initialize a GCS client
+    storage_client = storage.Client()
+
+    # Get the bucket
+    bucket = storage_client.bucket(bucket_name)
+
+    # Get the blob (file) from the bucket
+    blob = bucket.blob(source_blob_name)
+
+    # Generate checksum before download
+    print(f"Generating MD5 checksum before download for: {source_blob_name}")
+    blob_md5_before = blob.md5_hash
+    print(f"MD5 before download: {blob_md5_before}")
+
+    # Download the file
+    blob.download_to_filename(destination_file_name)
+    print(f"Downloaded {source_blob_name} to {destination_file_name}")
+
+    # Generate checksum after download
+    md5_after = generate_md5(destination_file_name)
+    print(f"MD5 after download: {md5_after}")
+
+    # Verify the checksums
+    if blob_md5_before == md5_after:
+        print("Checksum verification successful!")
+    else:
+        print("Checksum verification failed!")
+
+# Usage
+bucket_name = 'your-bucket-name'
+source_blob_name = 'path/to/your/file/in/bucket'
+destination_file_name = 'local/path/to/downloaded/file'
+
+download_from_gcs(bucket_name, source_blob_name, destination_file_name)
