@@ -1,0 +1,24 @@
+import hashlib
+import base64
+
+def calculate_gcs_checksum(filepath):
+    # Step 1: Create an MD5 hash object
+    md5_hash = hashlib.md5()
+    
+    # Step 2: Read the file in chunks and update the hash object
+    with open(filepath, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            md5_hash.update(chunk)
+    
+    # Step 3: Get the checksum in raw bytes
+    checksum = md5_hash.digest()
+    
+    # Step 4: Encode the checksum in base64
+    checksum_base64 = base64.b64encode(checksum)
+    
+    return checksum_base64.decode('utf-8')
+
+# Example usage:
+filepath = 'path/to/your/local/file'
+checksum_value = calculate_gcs_checksum(filepath)
+print("Checksum (Base64):", checksum_value)
